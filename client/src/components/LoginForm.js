@@ -6,14 +6,13 @@ import { Form, Button, Alert } from 'react-bootstrap';
 import Auth from '../utils/auth';
 
 import { LOGIN_USER } from '../utils/mutations';
-import { useMutation } from '@apollo/react-hooks';
+import { useMutation } from '@apollo/client';
 
 const LoginForm = () => {
   const [userFormData, setUserFormData] = useState({ email: '', password: '' });
   const [validated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [login, {err}] = useMutation(LOGIN_USER);
-  const [loginUser] = useMutation(LOGIN_USER);
+  const [login, { error }] = useMutation(LOGIN_USER);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -24,21 +23,15 @@ const LoginForm = () => {
     event.preventDefault();
 
     // check if form has everything (as per react-bootstrap docs)
-    const form = event.currentTarget;
-    if (form.checkValidity() === false) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-
+    
     try {
-      const { data } = await loginUser({
+      const { data } = await login({
         variables: {...userFormData} 
       });
 
       Auth.login(data.login.token);
-    } catch (err) {
-      console.error(err);
-      setShowAlert(true);
+    } catch (e) {
+      console.error(e);
     }
 
     setUserFormData({
@@ -62,8 +55,7 @@ const LoginForm = () => {
             name='email'
             onChange={handleInputChange}
             value={userFormData.email}
-            required
-          />
+            />
           <Form.Control.Feedback type='invalid'>Email is required!</Form.Control.Feedback>
         </Form.Group>
 
@@ -86,6 +78,7 @@ const LoginForm = () => {
           Submit
         </Button>
       </Form>
+      {error && <div>Login failed</div>}
     </>
   );
 };

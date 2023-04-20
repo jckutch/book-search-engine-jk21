@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Container,
-  Col,
-  Form,
-  Button,
-  Card,
-  Row
-} from 'react-bootstrap';
+import { Container, Col, Form, Button, Card, Row } from 'react-bootstrap';
 
 import Auth from '../utils/auth';
 import { searchGoogleBooks } from '../utils/API';
@@ -142,7 +135,7 @@ const SearchBooks = () => {
                       <Button
                         disabled={savedBookIds?.some((savedBookId) => savedBookId === book.bookId)}
                         className='btn-block btn-info'
-                        onClick={() => handleSaveBook(book.bookId)}>
+                        onClick={handleSaveBook}>
                         {savedBookIds?.some((savedBookId) => savedBookId === book.bookId)
                           ? 'This book has already been saved!'
                           : 'Save this Book!'}
