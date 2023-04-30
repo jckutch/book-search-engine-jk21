@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Col, Form, Button, Card, Row } from 'react-bootstrap';
+import { Jumbotron, Container, Col, Form, Button, Card, CardColumns,} from "react-bootstrap";
 
 import Auth from '../utils/auth';
-import { searchGoogleBooks } from '../utils/API';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
-import { useMutation } from '@apollo/react-hooks';
-import {SAVE_BOOK} from '../utils/mutations';
-import { GET_ME } from '../utils/queries';
+import { useMutation } from '@apollo/client';
+import { SAVE_BOOK } from '../utils/mutations';
 
 const SearchBooks = () => {
   // create state for holding returned google api data
@@ -17,7 +15,7 @@ const SearchBooks = () => {
   // create state to hold saved bookId values
   const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
 
-  const [saveBook] = useMutation(SAVE_BOOK)
+  const [saveBook, { error }] = useMutation(SAVE_BOOK);
 
   // set up useEffect hook to save `savedBookIds` list to localStorage on component unmount
   // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
@@ -34,7 +32,8 @@ const SearchBooks = () => {
     }
 
     try {
-      const response = await searchGoogleBooks(searchInput);
+      const response = await fetch(`
+      https://www.googleapis.com/books/v1/volumes?q=${searchInput}`);
 
       if (!response.ok) {
         throw new Error('something went wrong!');
@@ -47,7 +46,6 @@ const SearchBooks = () => {
         authors: book.volumeInfo.authors || ['No author to display'],
         title: book.volumeInfo.title,
         description: book.volumeInfo.description,
-        link: book.volumeInfo.infoLink,
         image: book.volumeInfo.imageLinks?.thumbnail || '',
       }));
 
@@ -71,14 +69,10 @@ const SearchBooks = () => {
     }
 
     try {
-      await saveBook({
-        variables: {book: bookToSave},
-        update: cache => {
-          const {me} = cache.readQuery({ query: GET_ME });
-          cache.writeQuery({ query: GET_ME , data: {me: { ...me, savedBooks: [...me.savedBooks, bookToSave] } } })
-        }
+      const { data } = await saveBook({
+        variables: { bookData: { ...bookToSave } },
       });
-
+      console.log(savedBookIds);
       // if book successfully saves to user's account, save book id to state
       setSavedBookIds([...savedBookIds, bookToSave.bookId]);
     } catch (err) {
@@ -114,15 +108,14 @@ const SearchBooks = () => {
       </div>
 
       <Container>
-        <h2 className='pt-5'>
+        <h2>
           {searchedBooks.length
             ? `Viewing ${searchedBooks.length} results:`
             : 'Search for a book to begin'}
         </h2>
-        <Row>
+        <CardColumns>
           {searchedBooks.map((book) => {
             return (
-              <Col md="4">
                 <Card key={book.bookId} border='dark'>
                   {book.image ? (
                     <Card.Img src={book.image} alt={`The cover for ${book.title}`} variant='top' />
@@ -143,10 +136,9 @@ const SearchBooks = () => {
                     )}
                   </Card.Body>
                 </Card>
-              </Col>
-            );
+             );
           })}
-        </Row>
+        </CardColumns>
       </Container>
     </>
   );
